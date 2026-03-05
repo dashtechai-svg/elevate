@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ElevateMe Admin Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0f0f1a;color:#e2e8f0;min-height:100vh}
+header{background:linear-gradient(135deg,#1a1150,#2d1f6e);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #3730a3}
+header h1{font-size:1.1rem;font-weight:700;color:#fff}
+header a{color:#a5b4fc;font-size:.82rem;text-decoration:none;padding:7px 16px;border:1px solid #3730a3;border-radius:8px}
+header a:hover{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.tabs{display:flex;gap:0;background:#13132b;border-bottom:1px solid #1e1e3a;padding:0 28px}
+.tab{padding:13px 22px;cursor:pointer;font-size:.85rem;color:#7c83a0;border-bottom:2px solid transparent;transition:.2s}
+.tab.active{color:#a5b4fc;border-bottom-color:#4f46e5;font-weight:600}
+.tab-content{display:none;padding:24px 28px}
+.tab-content.active{display:block}
+
+/* Summary cards */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:22px}
+.sum-card{background:#1a1a35;border:1px solid #2d2d5a;border-radius:10px;padding:14px;border-top:3px solid var(--c)}
+.sum-label{font-size:.68rem;color:#7c83a0;text-transform:uppercase;letter-spacing:.7px}
+.sum-val{font-size:1.6rem;font-weight:800;color:#fff;margin-top:4px}
+
+/* Agent cards for Q&P */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.agent-card{background:#1a1a35;border:1px solid #2d2d5a;border-radius:12px;padding:16px}
+.agent-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:#fff;flex-shrink:0}
+.agent-info .name{font-weight:700;color:#fff;font-size:.9rem}
+.agent-info .meta{font-size:.72rem;color:#6b7280;margin-top:2px}
+.stats-row{display:flex;gap:10px;margin-bottom:12px}
+.stat-mini{background:#13132b;border-radius:6px;padding:6px 10px;flex:1;text-align:center}
+.stat-mini .sl{font-size:.65rem;color:#7c83a0;text-transform:uppercase}
+.stat-mini .sv{font-size:.95rem;font-weight:700;color:#fff}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.input-group label{font-size:.7rem;color:#7c83a0;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:4px}
+.input-group input{width:100%;background:#13132b;border:1px solid #2d2d5a;border-radius:7px;padding:8px 10px;color:#e2e8f0;font-size:.88rem}
+.input-group input:focus{outline:none;border-color:#4f46e5}
+.conv-preview{font-size:.72rem;color:#f59e0b;margin-bottom:10px}
+.save-btn{width:100%;padding:8px;background:#4f46e5;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.83rem;font-weight:600;transition:.2s}
+.save-btn:hover{background:#6366f1}
+.save-btn.saved{background:#16a34a}
+
+/* Import tab */
+.import-box{background:#1a1a35;border:1px solid #2d2d5a;border-radius:12px;padding:24px;max-width:700px}
+.import-box h3{font-size:.9rem;font-weight:600;color:#fff;margin-bottom:8px}
+.import-box p{font-size:.8rem;color:#7c83a0;margin-bottom:14px;line-height:1.6}
+.import-box textarea{width:100%;height:180px;background:#13132b;border:1px solid #2d2d5a;border-radius:8px;padding:12px;color:#e2e8f0;font-size:.78rem;font-family:monospace;resize:vertical}
+.import-box textarea:focus{outline:none;border-color:#4f46e5}
+.import-actions{display:flex;gap:10px;margin-top:12px}
+.btn-primary{padding:9px 22px;background:#4f46e5;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.85rem;font-weight:600;transition:.2s}
+.btn-primary:hover{background:#6366f1}
+.btn-secondary{padding:9px 22px;background:transparent;border:1px solid #3730a3;border-radius:8px;color:#a5b4fc;cursor:pointer;font-size:.85rem;transition:.2s}
+.btn-secondary:hover{background:#1e1e3a}
+.reimport-card{background:#1a1a35;border:1px solid #2d2d5a;border-radius:12px;padding:24px;margin-bottom:18px}
+.reimport-card h3{font-size:.9rem;font-weight:600;color:#fff;margin-bottom:6px}
+.reimport-card p{font-size:.8rem;color:#7c83a0;margin-bottom:14px}
+.status-msg{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:.82rem;display:none}
+.status-ok{background:#14532d;color:#4ade80;display:block}
+.status-err{background:#3b1515;color:#f87171;display:block}
+.save-all-bar{position:sticky;bottom:0;background:#13132b;border-top:1px solid #1e1e3a;padding:14px 28px;display:flex;justify-content:space-between;align-items:center}
+.save-all-bar span{font-size:.82rem;color:#7c83a0}
+.btn-save-all{padding:10px 28px;background:#22c55e;border:none;border-radius:8px;color:#fff;cursor:pointer;font-weight:700;font-size:.9rem;transition:.2s}
+.btn-save-all:hover{background:#16a34a}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ElevateMe · Admin Panel</h1>
+  <a href="/">← View Dashboard</a>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('qp',this)">Qualified &amp; Prospects</div>
+  <div class="tab" onclick="switchTab('import',this)">Import Data</div>
+</div>
+
+<!-- TAB: Qualified & Prospects -->
+<div id="tab-qp" class="tab-content active">
+  <div class="summary" id="summaryCards"></div>
+  <div class="agent-grid" id="agentGrid"></div>
+</div>
+
+<!-- TAB: Import -->
+<div id="tab-import" class="tab-content">
+
+  <div class="reimport-card">
+    <h3>↺ Reimport from report.csv</h3>
+    <p>If you've placed a new <strong>report.csv</strong> in the server folder, click below to reload it immediately without restarting the server.</p>
+    <button class="btn-primary" onclick="reimport()">Reimport report.csv Now</button>
+    <div id="reimportStatus" class="status-msg"></div>
+  </div>
+
+  <div class="import-box">
+    <h3>📋 Paste Vonage Data</h3>
+    <p>Copy your data from Vonage (or Excel) and paste it below. Include the header row.<br/>
+    Accepted columns: <code>User, Ext(s), Total Calls, Inbound Calls, Inbound Call Duration, Outbound Calls, Answered Calls, Missed Calls, Voicemail Calls</code></p>
+    <textarea id="pasteArea" placeholder="Paste your data here (tab or comma separated, with header row)..."></textarea>
+    <div class="import-actions">
+      <button class="btn-primary" onclick="importPasted()">📥 Import Data</button>
+      <button class="btn-secondary" onclick="document.getElementById('pasteArea').value=''">Clear</button>
+    </div>
+    <div id="importStatus" class="status-msg"></div>
+  </div>
+</div>
+
+<!-- Sticky Save All -->
+<div class="save-all-bar" id="saveAllBar" style="display:none">
+  <span id="saveAllLabel">0 changes pending</span>
+  <button class="btn-save-all" onclick="saveAll()">💾 Save All Changes</button>
+</div>
+
+<script>
+let agentsData = [];
+let pendingChanges = {};
+
+const COLORS = ['#4f46e5','#22c55e','#f59e0b','#06b6d4','#a855f7','#ec4899','#ef4444','#14b8a6','#f97316','#8b5cf6'];
+
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+let currentDate = '';
+
+async function loadAgents(date) {
+  try {
+    const url = date ? `/api/data?date=${date}` : '/api/data';
+    const res  = await fetch(url);
+    const json = await res.json();
+    agentsData  = json.agents || [];
+    currentDate = json.date || date || '';
+
+    // Populate date picker in admin
+    if (json.availableDates) {
+      const picker = document.getElementById('adminDatePicker');
+      if (picker) {
+        picker.innerHTML = json.availableDates.map(d =>
+          `<option value="${d}" ${d===currentDate?'selected':''}>${d}</option>`
+        ).join('');
+      }
+    }
+    renderSummary();
+    renderAgentGrid();
+  } catch(e) { console.error('Failed to load agents:', e); }
+}
+
+function renderSummary() {
+  const totOut  = agentsData.reduce((s,a) => s+a.out, 0);
+  const totConn = agentsData.reduce((s,a) => s+a.conn, 0);
+  const totInb  = agentsData.reduce((s,a) => s+a.inbound, 0);
+  const totQ    = agentsData.reduce((s,a) => s+(a.qualified||0), 0);
+  const totP    = agentsData.reduce((s,a) => s+(a.prospects||0), 0);
+  const active  = agentsData.filter(a => a.out>0||a.inbound>0).length;
+
+  const cards = [
+    { label:'Active Agents', val:active,   c:'#4f46e5' },
+    { label:'Outcalls',      val:totOut,   c:'#22c55e' },
+    { label:'Connected',     val:totConn,  c:'#06b6d4' },
+    { label:'Inbound',       val:totInb,   c:'#f59e0b' },
+    { label:'Qualified',     val:totQ,     c:'#a855f7' },
+    { label:'Prospects',     val:totP,     c:'#ec4899' },
+  ];
+  document.getElementById('summaryCards').innerHTML = cards.map(c => `
+    <div class="sum-card" style="--c:${c.c}">
+      <div class="sum-label">${c.label}</div>
+      <div class="sum-val">${c.val}</div>
+    </div>`).join('');
+}
+
+function renderAgentGrid() {
+  const active = agentsData.filter(a => a.out > 0 || a.inbound > 0);
+  const inactive = agentsData.filter(a => a.out === 0 && a.inbound === 0);
+  const sorted = [...active.sort((a,b) => b.out - a.out), ...inactive];
+
+  document.getElementById('agentGrid').innerHTML = sorted.map((a, i) => {
+    const initials = a.user.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const color = COLORS[i % COLORS.length];
+    const ansRate = a.out ? ((a.conn/a.out)*100).toFixed(0) : 0;
+    const inbConn = a.inboundConnected || 0;
+    const q = a.qualified || 0;
+    const p = a.prospects || 0;
+    const conv = q ? ((p/q)*100).toFixed(0) : 0;
+    const pending = pendingChanges[a.user] || {};
+    const qVal = pending.qualified !== undefined ? pending.qualified : q;
+    const pVal = pending.prospects !== undefined ? pending.prospects : p;
+
+    return `
+    <div class="agent-card" id="card-${CSS.escape(a.user)}">
+      <div class="agent-header">
+        <div class="avatar" style="background:${color}">${initials}</div>
+        <div class="agent-info">
+          <div class="name">${a.user}</div>
+          <div class="meta">Ext: ${a.exts || '—'} &nbsp;·&nbsp; Ans Rate: ${ansRate}%</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-mini"><div class="sl">Outcalls</div><div class="sv">${a.out}</div></div>
+        <div class="stat-mini"><div class="sl">Connected</div><div class="sv" style="color:#22c55e">${a.conn}</div></div>
+        <div class="stat-mini"><div class="sl">Inbound</div><div class="sv" style="color:#f59e0b">${a.inbound}</div></div>
+        <div class="stat-mini"><div class="sl">Inb.Conn.</div><div class="sv" style="color:#06b6d4">${inbConn}</div></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Qualified</label>
+          <input type="number" min="0" id="q-${CSS.escape(a.user)}" value="${qVal}"
+            oninput="onInputChange('${a.user.replace(/'/g,"\\'")}', 'qualified', this.value)"/>
+        </div>
+        <div class="input-group">
+          <label>Prospects</label>
+          <input type="number" min="0" id="p-${CSS.escape(a.user)}" value="${pVal}"
+            oninput="onInputChange('${a.user.replace(/'/g,"\\'")}', 'prospects', this.value)"/>
+        </div>
+      </div>
+      <div class="conv-preview" id="conv-${CSS.escape(a.user)}">
+        Conv Rate: ${conv}% &nbsp;(${p} of ${q} qualified)
+      </div>
+      <button class="save-btn" id="btn-${CSS.escape(a.user)}" onclick="saveAgent('${a.user.replace(/'/g,"\\'")}')">
+        💾 Save
+      </button>
+    </div>`;
+  }).join('');
+
+  document.getElementById('saveAllBar').style.display = 'flex';
+}
+
+function onInputChange(user, field, val) {
+  if (!pendingChanges[user]) pendingChanges[user] = {};
+  pendingChanges[user][field] = parseInt(val) || 0;
+
+  // Update conv preview
+  const agent = agentsData.find(a => a.user === user);
+  const q = field === 'qualified' ? (parseInt(val)||0) : (pendingChanges[user]?.qualified ?? agent?.qualified ?? 0);
+  const p = field === 'prospects' ? (parseInt(val)||0) : (pendingChanges[user]?.prospects ?? agent?.prospects ?? 0);
+  const conv = q ? ((p/q)*100).toFixed(0) : 0;
+  const el = document.getElementById('conv-' + CSS.escape(user));
+  if (el) el.textContent = `Conv Rate: ${conv}% (${p} of ${q} qualified)`;
+
+  const count = Object.keys(pendingChanges).length;
+  document.getElementById('saveAllLabel').textContent = `${count} agent${count!==1?'s':''} with unsaved changes`;
+}
+
+async function saveAgent(user) {
+  const agent = agentsData.find(a => a.user === user);
+  const changes = pendingChanges[user] || {};
+  const qualified = changes.qualified !== undefined ? changes.qualified : (agent?.qualified || 0);
+  const prospects = changes.prospects !== undefined ? changes.prospects : (agent?.prospects || 0);
+
+  const btn = document.getElementById('btn-' + CSS.escape(user));
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  try {
+    await fetch(`/api/agent/${encodeURIComponent(user)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ qualified, prospects })
+    });
+    delete pendingChanges[user];
+    btn.textContent = '✅ Saved!';
+    btn.classList.add('saved');
+    setTimeout(() => { btn.textContent = '💾 Save'; btn.classList.remove('saved'); btn.disabled = false; }, 1500);
+    const count = Object.keys(pendingChanges).length;
+    document.getElementById('saveAllLabel').textContent = count ? `${count} agent${count!==1?'s':''} with unsaved changes` : 'All changes saved';
+    if (agent) { agent.qualified = qualified; agent.prospects = prospects; }
+    renderSummary();
+  } catch(e) {
+    btn.textContent = '❌ Error';
+    setTimeout(() => { btn.textContent = '💾 Save'; btn.disabled = false; }, 1500);
+  }
+}
+
+async function saveAll() {
+  const users = Object.keys(pendingChanges);
+  if (!users.length) return;
+  for (const user of users) await saveAgent(user);
+}
+
+async function reimport() {
+  const btn = document.querySelector('.reimport-card .btn-primary');
+  const status = document.getElementById('reimportStatus');
+  btn.textContent = 'Importing...';
+  btn.disabled = true;
+  try {
+    await fetch('/api/import', { method: 'POST' });
+    status.textContent = '✅ CSV imported successfully! Reloading data...';
+    status.className = 'status-msg status-ok';
+    await loadAgents();
+  } catch(e) {
+    status.textContent = '❌ Import failed. Make sure report.csv is in the server folder.';
+    status.className = 'status-msg status-err';
+  }
+  btn.textContent = 'Reimport report.csv Now';
+  btn.disabled = false;
+}
+
+const EMAIL_NAME = {
+  'abhijeet.d@elevateme.pro':'Abhijeet Das','avni.g@elevateme.pro':'Avni Gajjar',
+  'harsh.b@elevateme.pro':'Harsh Bhojak','kartik.d@elevateme.pro':'Kartik Deshawar',
+  'meet.patel@elevateme.pro':'Meet Patel','meet.v@elevateme.pro':'Meet Vyas',
+  'nikunj.p@elevateme.pro':'Nikunj Patel','Nikunj.p@elevateme.pro':'Nikunj Patel',
+  'nupur.v@elevateme.pro':'Nupur Vyas','om.d@elevateme.pro':'Om Dave',
+  'pranali.m@elevateme.pro':'Pranali Mishra','shivraj.j@elevateme.pro':'Shivraj Jhala',
+  'vidhi.p@elevateme.pro':'Vidhi Patel','yash.k@elevateme.pro':'Yash Karwa',
+  'yash.m@dashtechinc.com':'Yash Mishra','yogeshwar.t@elevateme.pro':'Yogeshwar Tiwari',
+  'tanu.k@elevateme.pro':'Tanu Kumari','nishant.s@elevateme.pro':'Nishant Sharma',
+  'soham.b@elevateme.pro':'Soham Bajpai','tejasvi.p@elevateme.pro':'Tejasvi Pathe',
+  'divya.j@elevateme.pro':'Divya Joshi','rushikesh.p@elevateme.pro':'Rushikesh Petkar',
+};
+
+function durToSec(s) {
+  if (!s) return 0;
+  const p = s.trim().split(':').map(Number);
+  if (p.length === 3) return p[0]*3600 + p[1]*60 + p[2];
+  if (p.length === 2) return p[0]*60 + p[1];
+  return 0;
+}
+
+async function importPasted() {
+  const raw = document.getElementById('pasteArea').value.trim();
+  const status = document.getElementById('importStatus');
+  if (!raw) { status.textContent = '⚠️ Please paste some data first.'; status.className='status-msg status-err'; return; }
+
+  try {
+    const lines = raw.split('\n').filter(l => l.trim());
+    let delim = '\t';
+    if (!lines[0].includes('\t') && lines[0].includes(',')) delim = ',';
+
+    const headers = lines[0].split(delim).map(h => h.trim().replace(/"/g,'').replace(/\s+/g,' ').toLowerCase());
+    const idx = k => headers.findIndex(h => h.includes(k.toLowerCase()));
+    const today = new Date().toISOString().split('T')[0];
+
+    // Detect raw call-log format — flexible matching
+    const isRawLog = headers.some(h =>
+      h.includes('direction') || h.includes('source userid') ||
+      h.includes('destination userid') || h.includes('sourceuserid') ||
+      h.includes('destinationuserid') || h.includes('source user') ||
+      h.includes('dest user')
+    );
+
+    let agents;
+
+    if (isRawLog) {
+      // Raw call-log: one row per call
+      const iDir = idx('direction'), iSrc = idx('source userid'), iDst = idx('destination userid'), iDur = idx('duration');
+      const map = {};
+
+      lines.slice(1).forEach(line => {
+        const cols = line.split(delim).map(c => c.trim().replace(/"/g,''));
+        const dir = (cols[iDir] || '').toLowerCase();
+        const srcUser = cols[iSrc] || '';
+        const dstUser = cols[iDst] || '';
+        const durSec = durToSec(cols[iDur] || '0');
+
+        let email = dir === 'outbound' ? srcUser : dstUser;
+        if (!email) return;
+
+        const name = EMAIL_NAME[email] || email.split('@')[0].replace(/\./g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+        if (!map[email]) map[email] = { user:name, out:0, conn:0, inbound:0, inboundSec:0, total:0, qualified:0, prospects:0 };
+
+        map[email].total++;
+        if (dir === 'outbound') {
+          map[email].out++;
+          if (durSec >= 60) map[email].conn++;
+        } else if (dir === 'inbound') {
+          map[email].inbound++;
+          map[email].inboundSec += durSec;
+        }
+      });
+
+      agents = Object.values(map).map(a => {
+        const s = a.inboundSec;
+        const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+        return { date:today, user:a.user, exts:'', total:a.total,
+          inbound:a.inbound, inboundDur:`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,
+          out:a.out, conn:a.conn, missed:0, vm:0, qualified:0, prospects:0 };
+      });
+
+    } else {
+      // Summary format
+      const iUser=idx('user'), iOut=idx('outbound'), iAns=idx('answered'),
+            iInb=idx('inbound calls'), iInbDur=idx('inbound call dur'),
+            iTotal=idx('total calls'), iMiss=idx('missed'), iVm=idx('voicemail');
+
+      if (iUser < 0 || iOut < 0) {
+        status.textContent = '❌ Could not detect format. Make sure header row is included.';
+        status.className = 'status-msg status-err'; return;
+      }
+      agents = lines.slice(1).map(line => {
+        const cols = line.split(delim).map(c => c.trim().replace(/"/g,''));
+        return { date:today, user:cols[iUser]||'', exts:'',
+          total: parseInt(cols[iTotal])||0, inbound: parseInt(cols[iInb])||0,
+          inboundDur: iInbDur>=0 ? cols[iInbDur] : '0:00:00',
+          out: parseInt(cols[iOut])||0, missed: iMiss>=0 ? parseInt(cols[iMiss])||0 : 0,
+          conn: parseInt(cols[iAns])||0, vm: iVm>=0 ? parseInt(cols[iVm])||0 : 0,
+          qualified:0, prospects:0 };
+      }).filter(a => a.user);
+    }
+
+    if (!agents || !agents.length) {
+      status.textContent = '❌ No valid agent rows found. Make sure you include the header row.';
+      status.className = 'status-msg status-err'; return;
+    }
+
+    // Save via API
+    const res = await fetch('/api/import-paste', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agents })
+    });
+
+    if (res.ok) {
+      status.textContent = `✅ Imported ${agents.length} agents successfully! Refreshing...`;
+      status.className = 'status-msg status-ok';
+      await loadAgents();
+    } else {
+      status.textContent = '❌ Server error saving data.';
+      status.className = 'status-msg status-err';
+    }
+
+  } catch(e) {
+    status.textContent = '❌ Parse error: ' + e.message;
+    status.className = 'status-msg status-err';
+  }
+}
+
+loadAgents();
+</script>
+</body>
+</html>

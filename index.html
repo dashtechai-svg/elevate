@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ElevateMe Sales Call</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0f0f1a;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* Header */
+header{background:linear-gradient(135deg,#1a1150,#2d1f6e);padding:11px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #3730a3;flex-shrink:0;gap:12px}
+header h1{font-size:1.05rem;font-weight:700;color:#fff;letter-spacing:1px;white-space:nowrap}
+.live-badge{display:flex;align-items:center;gap:7px;font-size:.75rem;color:#a5b4fc;white-space:nowrap}
+.dot{width:7px;height:7px;background:#22c55e;border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Date Nav Bar */
+.datebar{display:flex;align-items:center;gap:8px;padding:8px 20px;background:#13132b;border-bottom:1px solid #1e1e3a;flex-shrink:0;flex-wrap:wrap}
+.nav-btn{width:28px;height:28px;border-radius:6px;border:1px solid #3730a3;background:transparent;color:#a5b4fc;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:.2s}
+.nav-btn:hover{background:#4f46e5;border-color:#4f46e5;color:#fff}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.date-label{font-size:.85rem;font-weight:600;color:#fff;min-width:160px;text-align:center}
+.date-badge{font-size:.7rem;color:#a5b4fc;background:#1a1a35;border:1px solid #2d2d5a;border-radius:6px;padding:3px 10px}
+input[type="date"]#calPicker{background:#1a1a35;border:1px solid #3730a3;border-radius:8px;padding:4px 10px;color:#a5b4fc;font-size:.78rem;cursor:pointer}
+input[type="date"]#calPicker:focus{outline:none;border-color:#4f46e5}
+input[type="date"]#calPicker::-webkit-calendar-picker-indicator{filter:invert(.6)}
+.dot-row{display:flex;gap:4px;align-items:center;margin-left:4px}
+.date-dot{width:7px;height:7px;border-radius:50%;background:#2d2d5a;cursor:pointer;transition:.2s;border:1px solid #3730a3}
+.date-dot.has-data{background:#4f46e5}
+.date-dot.active{background:#22c55e;border-color:#22c55e}
+.ml-auto{margin-left:auto}
+
+/* Import Drawer */
+.import-btn{padding:5px 14px;border-radius:8px;border:1px solid #3730a3;background:transparent;color:#a5b4fc;cursor:pointer;font-size:.75rem;transition:.2s;white-space:nowrap}
+.import-btn:hover{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.import-drawer{position:fixed;top:0;right:-460px;width:440px;height:100vh;background:#13132b;border-left:1px solid #2d2d5a;z-index:100;transition:right .3s ease;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,.5)}
+.import-drawer.open{right:0}
+.drawer-header{padding:16px 18px;border-bottom:1px solid #1e1e3a;display:flex;justify-content:space-between;align-items:center}
+.drawer-header h3{font-size:.95rem;font-weight:700;color:#fff}
+.drawer-close{background:transparent;border:none;color:#7c83a0;cursor:pointer;font-size:1.2rem;padding:4px 8px;border-radius:6px}
+.drawer-close:hover{background:#1e1e3a;color:#fff}
+.drawer-body{padding:16px 18px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.drawer-label{font-size:.72rem;color:#7c83a0;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
+.drawer-date-row{display:flex;gap:8px;align-items:center}
+.drawer-date-row input[type="date"]{flex:1;background:#1a1a35;border:1px solid #2d2d5a;border-radius:8px;padding:7px 10px;color:#e2e8f0;font-size:.82rem}
+.drawer-date-row input:focus{outline:none;border-color:#4f46e5}
+textarea#pasteArea{width:100%;height:200px;background:#1a1a35;border:1px solid #2d2d5a;border-radius:8px;padding:10px;color:#e2e8f0;font-size:.72rem;font-family:monospace;resize:vertical}
+textarea#pasteArea:focus{outline:none;border-color:#4f46e5}
+.drawer-hint{font-size:.7rem;color:#6b7280;line-height:1.5}
+.drawer-hint code{color:#a5b4fc;background:#1a1a35;padding:1px 5px;border-radius:4px}
+.drawer-actions{display:flex;gap:8px}
+.btn-import{flex:1;padding:9px;background:#4f46e5;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.85rem;font-weight:600;transition:.2s}
+.btn-import:hover{background:#6366f1}
+.btn-clear{padding:9px 16px;background:transparent;border:1px solid #3730a3;border-radius:8px;color:#a5b4fc;cursor:pointer;font-size:.82rem;transition:.2s}
+.btn-clear:hover{background:#1e1e3a}
+.drawer-status{padding:10px 14px;border-radius:8px;font-size:.8rem;display:none}
+.status-ok{background:#14532d;color:#4ade80;display:block}
+.status-err{background:#3b1515;color:#f87171;display:block}
+.drawer-qp{border-top:1px solid #1e1e3a;padding-top:14px}
+.qp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-height:260px;overflow-y:auto}
+.qp-agent{background:#1a1a35;border:1px solid #2d2d5a;border-radius:8px;padding:10px}
+.qp-name{font-size:.72rem;font-weight:600;color:#fff;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qp-agent label{font-size:.62rem;color:#7c83a0;text-transform:uppercase;display:block;margin-bottom:2px}
+.qp-agent input{width:100%;background:#13132b;border:1px solid #2d2d5a;border-radius:5px;padding:4px 6px;color:#e2e8f0;font-size:.8rem;margin-bottom:4px}
+.qp-agent input:focus{outline:none;border-color:#4f46e5}
+.btn-save-all{width:100%;padding:8px;background:#22c55e;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.82rem;font-weight:600;margin-top:8px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;display:none}
+.overlay.open{display:block}
+
+/* Main 50/50 */
+.main{display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden;min-height:0}
+
+/* Left */
+.left{padding:12px 10px 12px 18px;overflow-y:auto;border-right:1px solid #1e1e3a;display:flex;flex-direction:column;gap:9px}
+.section-label{font-size:.65rem;color:#6b7280;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:#1e1e3a}
+
+/* Total card */
+.total-card{background:linear-gradient(135deg,#312e81,#4338ca);border-radius:12px;padding:14px 18px;border:1px solid #6366f1;box-shadow:0 0 20px rgba(99,102,241,.2);display:flex;justify-content:space-between;align-items:center}
+.tc-icon{font-size:1.2rem;margin-bottom:3px}
+.tc-label{font-size:.65rem;color:#c7d2fe;text-transform:uppercase;letter-spacing:.8px}
+.tc-value{font-size:2.2rem;font-weight:900;color:#fff;line-height:1;margin:3px 0}
+.tc-sub{font-size:.68rem;color:#a5b4fc}
+.tc-pills{display:flex;flex-direction:column;gap:5px}
+.tc-pill{background:rgba(255,255,255,.1);border-radius:7px;padding:5px 12px;text-align:right;min-width:90px}
+.tc-pill .pl{font-size:.6rem;color:#c7d2fe;text-transform:uppercase}
+.tc-pill .pv{font-size:1rem;font-weight:800;color:#fff}
+
+/* Stat cards */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.stat-card{background:#1a1a35;border:1px solid #2d2d5a;border-radius:11px;padding:12px 14px;position:relative;overflow:hidden;transition:.2s}
+.stat-card:hover{border-color:var(--ac);transform:translateY(-1px)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac)}
+.sc-head{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.sc-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.8rem;background:var(--ac-bg)}
+.sc-tag{font-size:.6rem;color:#7c83a0;text-transform:uppercase;letter-spacing:.7px;font-weight:600}
+.sc-value{font-size:1.7rem;font-weight:900;color:#fff;line-height:1}
+.sc-desc{font-size:.67rem;color:#a5b4fc;margin-top:2px}
+.sc-pct{font-size:.72rem;font-weight:700;margin-top:5px}
+.sc-prog-wrap{height:4px;background:#1e1e3a;border-radius:2px;margin-top:4px}
+.sc-prog{height:4px;border-radius:2px;background:var(--ac);transition:width .5s}
+.sc-meta{font-size:.64rem;color:#6b7280;margin-top:3px}
+
+/* Lead cards */
+.lead-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.lead-card{background:#1a1a35;border:1px solid #2d2d5a;border-radius:11px;padding:12px;position:relative;overflow:hidden}
+.lead-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac)}
+.lc-icon{font-size:.9rem;margin-bottom:5px}
+.lc-tag{font-size:.58rem;color:#7c83a0;text-transform:uppercase;letter-spacing:.7px}
+.lc-value{font-size:1.5rem;font-weight:900;color:#fff;line-height:1;margin:3px 0}
+.lc-sub{font-size:.65rem;color:#a5b4fc}
+.lc-pct{font-size:.7rem;font-weight:700;margin-top:4px}
+.lc-prog-wrap{height:3px;background:#1e1e3a;border-radius:2px;margin-top:3px}
+.lc-prog{height:3px;border-radius:2px;background:var(--ac);transition:width .5s}
+.lc-meta{font-size:.62rem;color:#6b7280;margin-top:2px}
+
+/* AI */
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ai-card{background:#1a1a35;border:1px solid #2d2d5a;border-radius:9px;padding:11px;border-left:3px solid var(--ac)}
+.ai-title{font-size:.62rem;color:#7c83a0;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px}
+.ai-val{font-size:.82rem;font-weight:700;color:#fff}
+.ai-desc{font-size:.67rem;color:#a5b4fc;margin-top:2px;line-height:1.4}
+
+/* Right - Leaderboard */
+.right{padding:12px 18px 12px 10px;overflow-y:auto;display:flex;flex-direction:column;gap:9px}
+.lb-header{display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.lb-search input{background:#1a1a35;border:1px solid #2d2d5a;border-radius:8px;padding:5px 11px;color:#e2e8f0;width:190px;font-size:.78rem}
+.lb-search input:focus{outline:none;border-color:#4f46e5}
+.lb-count{font-size:.7rem;color:#6b7280}
+.table-wrap{flex:1;overflow-y:auto;border-radius:10px;border:1px solid #2d2d5a}
+table{width:100%;border-collapse:collapse;background:#1a1a35;font-size:.76rem}
+thead{position:sticky;top:0;z-index:2}
+thead tr{background:#0d0d1f}
+th{padding:8px 9px;text-align:left;font-size:.6rem;color:#7c83a0;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;border-bottom:1px solid #2d2d5a}
+td{padding:7px 9px;border-top:1px solid #1e1e3a;white-space:nowrap;vertical-align:middle}
+tr:hover td{background:#1e1e3a}
+.agent-name{font-weight:600;color:#fff;font-size:.78rem;display:block}
+.agent-ext{font-size:.63rem;color:#6b7280}
+.bar-wrap{width:44px;height:4px;background:#1e1e3a;border-radius:2px;display:inline-block;vertical-align:middle;margin-left:4px}
+.bar-fill{height:4px;border-radius:2px}
+.badge{padding:2px 7px;border-radius:7px;font-size:.6rem;font-weight:700}
+.badge-top{background:#14532d;color:#4ade80}
+.badge-good{background:#1e3a5f;color:#60a5fa}
+.badge-low{background:#3b1515;color:#f87171}
+.badge-idle{background:#1f2937;color:#6b7280}
+.no-data{text-align:center;padding:30px;color:#6b7280;font-size:.85rem}
+
+@media(max-width:1024px){body{overflow:auto}.main{grid-template-columns:1fr;overflow:visible}.right{border-top:1px solid #1e1e3a}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ElevateMe Sales Call</h1>
+  <div class="live-badge"><div class="dot"></div><span id="clock">--:--:--</span>&nbsp;|&nbsp;Auto-refresh 60s</div>
+</header>
+
+<!-- Date Navigation Bar -->
+<div class="datebar">
+  <button class="nav-btn" id="btnPrev" onclick="navDate(-1)" title="Previous day">&#8249;</button>
+  <span class="date-label" id="dateLabel">Loading...</span>
+  <button class="nav-btn" id="btnNext" onclick="navDate(1)" title="Next day">&#8250;</button>
+  <span class="date-badge" id="dateBadge"></span>
+  <div class="dot-row" id="dotRow" title="Recent dates with data"></div>
+  <input type="date" id="calPicker" onchange="pickDate(this.value)" title="Pick a date"/>
+  <div class="ml-auto" style="display:flex;gap:8px">
+    <button class="import-btn" onclick="openDrawer()">📥 Import Data</button>
+  </div>
+</div>
+
+<!-- Import Drawer -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="import-drawer" id="importDrawer">
+  <div class="drawer-header">
+    <h3>📥 Import Vonage Data</h3>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div>
+      <div class="drawer-label">Date for this import</div>
+      <div class="drawer-date-row">
+        <input type="date" id="importDate"/>
+        <span style="font-size:.72rem;color:#6b7280">Leave blank = today</span>
+      </div>
+    </div>
+    <div>
+      <div class="drawer-label">Paste Vonage Call Log</div>
+      <textarea id="pasteArea" placeholder="Copy your Vonage call log (including header row) and paste here...&#10;&#10;Supports both formats:&#10;• Raw call log (Direction, Source UserId, Duration...)&#10;• Summary report (User, Outbound Calls, Answered Calls...)"></textarea>
+      <div class="drawer-hint" style="margin-top:6px">
+        In Vonage Admin Portal → Reports → Call Logs → Export → Copy all rows including header → Paste above
+      </div>
+    </div>
+    <div class="drawer-actions">
+      <button class="btn-import" onclick="importPasted()">📥 Import Now</button>
+      <button class="btn-clear" onclick="document.getElementById('pasteArea').value=''">Clear</button>
+    </div>
+    <div id="importStatus" class="drawer-status"></div>
+
+    <!-- Qualified / Prospects / Enrolled per agent -->
+    <div class="drawer-qp" id="qpSection" style="display:none">
+      <div class="drawer-label" style="margin-bottom:8px">Update Leads per Advisor</div>
+      <div class="qp-grid" id="qpGrid"></div>
+      <button class="btn-save-all" onclick="saveAllQP()">💾 Save All Lead Data</button>
+      <div id="qpStatus" class="drawer-status" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="left">
+    <div class="section-label">📞 Calls Data &nbsp; Outbound · Inbound · Connected (60s+)</div>
+    <div class="total-card">
+      <div>
+        <div class="tc-icon">📞</div>
+        <div class="tc-label">ALL · Total Calls</div>
+        <div class="tc-value" id="tcTotal">0</div>
+        <div class="tc-sub">Outbound + Inbound combined</div>
+      </div>
+      <div class="tc-pills">
+        <div class="tc-pill"><div class="pl">Outcalls</div><div class="pv" id="tcOut">0</div></div>
+        <div class="tc-pill"><div class="pl">Inbound</div><div class="pv" id="tcInb">0</div></div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card" style="--ac:#4f46e5;--ac-bg:rgba(79,70,229,.15)">
+        <div class="sc-head"><div class="sc-icon">📤</div><div class="sc-tag">Outbound</div></div>
+        <div class="sc-value" id="scOut">0</div>
+        <div class="sc-desc">Total outbound dialled</div>
+      </div>
+      <div class="stat-card" style="--ac:#f59e0b;--ac-bg:rgba(245,158,11,.15)">
+        <div class="sc-head"><div class="sc-icon">📥</div><div class="sc-tag">Inbound</div></div>
+        <div class="sc-value" id="scInb">0</div>
+        <div class="sc-desc">Received from customers</div>
+      </div>
+      <div class="stat-card" style="--ac:#22c55e;--ac-bg:rgba(34,197,94,.15)">
+        <div class="sc-head"><div class="sc-icon">⏱</div><div class="sc-tag">Connected Out</div></div>
+        <div class="sc-value" id="scConn">0</div>
+        <div class="sc-desc">Outbound calls 60s+</div>
+        <div class="sc-pct" id="scConnPct" style="color:#22c55e">0.0%</div>
+        <div class="sc-prog-wrap"><div class="sc-prog" id="scConnBar" style="width:0%"></div></div>
+        <div class="sc-meta" id="scConnMeta">of outcalls</div>
+      </div>
+      <div class="stat-card" style="--ac:#06b6d4;--ac-bg:rgba(6,182,212,.15)">
+        <div class="sc-head"><div class="sc-icon">⏱</div><div class="sc-tag">Connected In</div></div>
+        <div class="sc-value" id="scInbConn">0</div>
+        <div class="sc-desc">Inbound calls over 60s</div>
+        <div class="sc-pct" id="scInbConnPct" style="color:#06b6d4">0.0%</div>
+        <div class="sc-prog-wrap"><div class="sc-prog" id="scInbConnBar" style="width:0%;background:#06b6d4"></div></div>
+        <div class="sc-meta" id="scInbConnMeta">of inbound</div>
+      </div>
+    </div>
+    <div class="section-label">🎯 Lead Status &nbsp; Qualified · Prospects · Enrolled</div>
+    <div class="lead-grid">
+      <div class="lead-card" style="--ac:#a855f7">
+        <div class="lc-icon">🎯</div><div class="lc-tag">Qualified</div>
+        <div class="lc-value" id="lcQual">0</div><div class="lc-sub">Qualified Leads</div>
+        <div class="lc-pct" id="lcQualPct" style="color:#a855f7">0.0%</div>
+        <div class="lc-prog-wrap"><div class="lc-prog" id="lcQualBar" style="width:0%"></div></div>
+        <div class="lc-meta" id="lcQualMeta">of connected</div>
+      </div>
+      <div class="lead-card" style="--ac:#ec4899">
+        <div class="lc-icon">🏆</div><div class="lc-tag">Prospects</div>
+        <div class="lc-value" id="lcPros">0</div><div class="lc-sub">Prospects</div>
+        <div class="lc-pct" id="lcProsPct" style="color:#ec4899">0%</div>
+        <div class="lc-prog-wrap"><div class="lc-prog" id="lcProsBar" style="width:0%;background:#ec4899"></div></div>
+        <div class="lc-meta" id="lcProsMeta">of qualified</div>
+      </div>
+      <div class="lead-card" style="--ac:#22c55e">
+        <div class="lc-icon">✅</div><div class="lc-tag">Enrolled</div>
+        <div class="lc-value" id="lcEnr">0</div><div class="lc-sub">Enrolled</div>
+        <div class="lc-pct" id="lcEnrPct" style="color:#22c55e">0%</div>
+        <div class="lc-prog-wrap"><div class="lc-prog" id="lcEnrBar" style="width:0%;background:#22c55e"></div></div>
+        <div class="lc-meta" id="lcEnrMeta">of prospects</div>
+      </div>
+    </div>
+    <div class="section-label">✦ AI Insights</div>
+    <div class="ai-grid" id="aiGrid"></div>
+  </div>
+
+  <div class="right">
+    <div class="section-label">🏅 Leaderboard &nbsp; All Advisors</div>
+    <div class="lb-header">
+      <div class="lb-search"><input type="text" id="searchBox" placeholder="🔍 Search advisor..." oninput="renderTable()"/></div>
+      <div class="lb-count" id="lbCount">—</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Advisor</th><th>Outcalls</th><th>Conn.</th>
+          <th>Conn%</th><th>Inbound</th><th>Inb.C</th>
+          <th>Qual</th><th>Pros</th><th>Conv%</th><th>Status</th>
+        </tr></thead>
+        <tbody id="agentTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+let allAgents = [], availableDates = [], currentDate = '';
+
+// ── Helpers ──
+function safe(n){ return isNaN(n)||!isFinite(n) ? 0 : n; }
+function pctStr(a,b){ return b>0 ? (Math.min(100,safe(a/b*100))).toFixed(1)+'%' : '0.0%'; }
+function pctNum(a,b){ return b>0 ? Math.min(100,Math.round(safe(a/b*100))) : 0; }
+
+// ── Date helpers — US Eastern Time ──
+function today(){
+  // Always returns YYYY-MM-DD in US Eastern Time (auto handles EST/EDT)
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+}
+function addDays(d,n){
+  const dt = new Date(d+'T12:00:00'); // noon to avoid DST edge cases
+  dt.setDate(dt.getDate()+n);
+  return dt.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+}
+function fmtLabel(d){
+  if(!d) return '—';
+  const t = today(), y = addDays(t,-1);
+  if(d===t) return 'Today';
+  if(d===y) return 'Yesterday';
+  const dt = new Date(d+'T00:00:00');
+  return dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+}
+
+// ── Fetch data ──
+async function fetchData(date){
+  try{
+    const url = date ? `/api/data?date=${date}` : '/api/data';
+    const res  = await fetch(url);
+    const json = await res.json();
+    allAgents      = json.agents || [];
+    currentDate    = json.date   || today();
+    availableDates = json.availableDates || [];
+    updateDateUI();
+    renderQPGrid();
+  }catch(e){ console.warn('fetch failed',e); }
+  render();
+}
+
+function updateDateUI(){
+  document.getElementById('dateLabel').textContent = fmtLabel(currentDate);
+  document.getElementById('calPicker').value = currentDate;
+
+  // badge
+  const t=today(), y=addDays(t,-1);
+  const badge = document.getElementById('dateBadge');
+  badge.textContent = currentDate===t?'Today':currentDate===y?'Yesterday':'Historical';
+  badge.style.color  = currentDate===t?'#22c55e':currentDate===y?'#f59e0b':'#a5b4fc';
+
+  // nav buttons
+  const idx = availableDates.indexOf(currentDate);
+  document.getElementById('btnPrev').disabled = idx >= availableDates.length-1;
+  document.getElementById('btnNext').disabled = idx <= 0;
+
+  // dots (last 7 dates with data)
+  const dotRow = document.getElementById('dotRow');
+  const recent = availableDates.slice(0,7).reverse();
+  dotRow.innerHTML = recent.map(d=>`
+    <div class="date-dot has-data${d===currentDate?' active':''}" title="${d}" onclick="pickDate('${d}')"></div>
+  `).join('');
+}
+
+function navDate(dir){
+  const idx = availableDates.indexOf(currentDate);
+  const newIdx = idx - dir; // dir=1 means next (lower index = newer)
+  if(newIdx >= 0 && newIdx < availableDates.length){
+    fetchData(availableDates[newIdx]);
+  }
+}
+
+function pickDate(val){
+  if(!val) return;
+  fetchData(val);
+}
+
+// ── Drawer ──
+function openDrawer(){
+  document.getElementById('importDate').value = currentDate || today();
+  document.getElementById('importDrawer').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('importDrawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+// ── Email → Name ──
+const EMAIL_NAME = {
+  'abhijeet.d@elevateme.pro':'Abhijeet Das','avni.g@elevateme.pro':'Avni Gajjar',
+  'harsh.b@elevateme.pro':'Harsh Bhojak','kartik.d@elevateme.pro':'Kartik Deshawar',
+  'meet.patel@elevateme.pro':'Meet Patel','meet.v@elevateme.pro':'Meet Vyas',
+  'nikunj.p@elevateme.pro':'Nikunj Patel','Nikunj.p@elevateme.pro':'Nikunj Patel',
+  'nupur.v@elevateme.pro':'Nupur Vyas','om.d@elevateme.pro':'Om Dave',
+  'pranali.m@elevateme.pro':'Pranali Mishra','shivraj.j@elevateme.pro':'Shivraj Jhala',
+  'vidhi.p@elevateme.pro':'Vidhi Patel','yash.k@elevateme.pro':'Yash Karwa',
+  'yash.m@dashtechinc.com':'Yash Mishra','yogeshwar.t@elevateme.pro':'Yogeshwar Tiwari',
+  'tanu.k@elevateme.pro':'Tanu Kumari','nishant.s@elevateme.pro':'Nishant Sharma',
+  'soham.b@elevateme.pro':'Soham Bajpai','tejasvi.p@elevateme.pro':'Tejasvi Pathe',
+  'divya.j@elevateme.pro':'Divya Joshi','rushikesh.p@elevateme.pro':'Rushikesh Petkar',
+};
+function emailToName(e){
+  if(!e) return 'Unknown';
+  e = e.trim();
+  if(EMAIL_NAME[e]) return EMAIL_NAME[e];
+  return e.split('@')[0].replace(/\./g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function durToSec(s){
+  if(!s) return 0;
+  const p=String(s).trim().split(':').map(Number);
+  if(p.length===3) return (p[0]||0)*3600+(p[1]||0)*60+(p[2]||0);
+  if(p.length===2) return (p[0]||0)*60+(p[1]||0);
+  return 0;
+}
+
+// ── Import paste ──
+async function importPasted(){
+  const raw    = document.getElementById('pasteArea').value.trim();
+  const status = document.getElementById('importStatus');
+  const dateVal= document.getElementById('importDate').value || today();
+  status.className='drawer-status'; status.textContent='';
+
+  if(!raw){ status.textContent='⚠️ Please paste data first.'; status.className='drawer-status status-err'; return; }
+
+  try{
+    const lines = raw.split('\n').filter(l=>l.trim());
+    if(lines.length<2){ status.textContent='❌ Need at least header + 1 data row.'; status.className='drawer-status status-err'; return; }
+
+    let delim='\t';
+    if(!lines[0].includes('\t') && lines[0].includes(',')) delim=',';
+
+    const hdrs = lines[0].split(delim).map(h=>h.trim().replace(/"/g,'').toLowerCase().replace(/\s+/g,' '));
+    const col  = k => hdrs.findIndex(h=>h.includes(k));
+
+    const isRaw = hdrs.some(h=>h.includes('direction')||h.includes('source user'));
+    let agents;
+
+    if(isRaw){
+      const iDir=col('direction'), iSrc=col('source user'), iDst=col('destination user'), iDur=col('duration');
+      if(iDir<0){ status.textContent=`❌ "Direction" column not found. Headers: ${hdrs.slice(0,6).join(' | ')}`; status.className='drawer-status status-err'; return; }
+      const map={};
+      lines.slice(1).forEach(line=>{
+        const c=line.split(delim).map(x=>x.trim().replace(/"/g,''));
+        const dir=(c[iDir]||'').toLowerCase();
+        const email= dir==='outbound'?(c[iSrc]||''):(c[iDst]||'');
+        if(!email||!email.includes('@')) return;
+        const sec=durToSec(c[iDur]||'0');
+        const name=emailToName(email);
+        if(!map[email]) map[email]={user:name,out:0,conn:0,inbound:0,inbSec:0,total:0};
+        map[email].total++;
+        if(dir==='outbound'){ map[email].out++; if(sec>=60) map[email].conn++; }
+        else if(dir==='inbound'){ map[email].inbound++; map[email].inbSec+=sec; }
+      });
+      agents=Object.values(map).map(a=>{
+        const s=a.inbSec, h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+        return{date:dateVal,user:a.user,exts:'',total:a.total,inbound:a.inbound,
+          inboundDur:`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,
+          inboundConnected:0,out:a.out,conn:a.conn,missed:0,vm:0,qualified:0,prospects:0,enrolled:0};
+      });
+    } else {
+      const iUser=col('user'),iOut=col('outbound'),iAns=col('answered'),iInb=col('inbound calls'),
+            iInbDur=col('inbound call dur'),iTotal=col('total');
+      if(iUser<0||iOut<0){ status.textContent='❌ Cannot find User/Outbound columns. Include header row.'; status.className='drawer-status status-err'; return; }
+      agents=lines.slice(1).map(line=>{
+        const c=line.split(delim).map(x=>x.trim().replace(/"/g,''));
+        return{date:dateVal,user:c[iUser]||'',exts:'',
+          total:parseInt(c[iTotal])||0,inbound:parseInt(c[iInb])||0,
+          inboundDur:iInbDur>=0?c[iInbDur]:'0:00:00',inboundConnected:0,
+          out:parseInt(c[iOut])||0,conn:parseInt(c[iAns])||0,
+          missed:0,vm:0,qualified:0,prospects:0,enrolled:0};
+      }).filter(a=>a.user);
+    }
+
+    if(!agents.length){ status.textContent='❌ No valid agent rows found.'; status.className='drawer-status status-err'; return; }
+
+    const res = await fetch('/api/import-paste',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({agents, date: dateVal})
+    });
+    if(res.ok){
+      status.textContent=`✅ ${agents.length} advisors imported for ${dateVal}`;
+      status.className='drawer-status status-ok';
+      document.getElementById('pasteArea').value='';
+      await fetchData(dateVal);
+    } else {
+      const txt = await res.text();
+      status.textContent='❌ Server error: '+txt;
+      status.className='drawer-status status-err';
+    }
+  }catch(e){
+    status.textContent='❌ Error: '+e.message;
+    status.className='drawer-status status-err';
+  }
+}
+
+// ── QP Grid in drawer ──
+function renderQPGrid(){
+  if(!allAgents.length){ document.getElementById('qpSection').style.display='none'; return; }
+  document.getElementById('qpSection').style.display='block';
+  const active = allAgents.filter(a=>(a.out||0)>0||(a.inbound||0)>0);
+  document.getElementById('qpGrid').innerHTML = active.map(a=>`
+    <div class="qp-agent">
+      <div class="qp-name" title="${a.user}">${a.user.split(' ')[0]}</div>
+      <label>Qual</label>
+      <input type="number" min="0" id="q_${CSS.escape(a.user)}" value="${a.qualified||0}"/>
+      <label>Pros</label>
+      <input type="number" min="0" id="p_${CSS.escape(a.user)}" value="${a.prospects||0}"/>
+      <label>Enrl</label>
+      <input type="number" min="0" id="e_${CSS.escape(a.user)}" value="${a.enrolled||0}"/>
+    </div>`).join('');
+}
+
+async function saveAllQP(){
+  const status = document.getElementById('qpStatus');
+  const active = allAgents.filter(a=>(a.out||0)>0||(a.inbound||0)>0);
+  let saved=0;
+  for(const a of active){
+    const q=parseInt(document.getElementById('q_'+CSS.escape(a.user))?.value)||0;
+    const p=parseInt(document.getElementById('p_'+CSS.escape(a.user))?.value)||0;
+    const e=parseInt(document.getElementById('e_'+CSS.escape(a.user))?.value)||0;
+    try{
+      await fetch(`/api/agent/${encodeURIComponent(a.user)}`,{
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({qualified:q, prospects:p, enrolled:e, date:currentDate})
+      });
+      saved++;
+    }catch(err){}
+  }
+  status.textContent=`✅ Saved ${saved} advisors`; status.className='drawer-status status-ok';
+  await fetchData(currentDate);
+  setTimeout(()=>{ status.className='drawer-status'; },3000);
+}
+
+// ── Render dashboard ──
+function render(){
+  const data   = allAgents;
+  const active = data.filter(a=>(a.out||0)>0||(a.inbound||0)>0);
+
+  const totOut  = active.reduce((s,a)=>s+(a.out||0),0);
+  const totConn = active.reduce((s,a)=>s+(a.conn||0),0);
+  const totInb  = active.reduce((s,a)=>s+(a.inbound||0),0);
+  const totInbC = active.reduce((s,a)=>s+(a.inboundConnected||0),0);
+  const totQual = active.reduce((s,a)=>s+(a.qualified||0),0);
+  const totPros = active.reduce((s,a)=>s+(a.prospects||0),0);
+  const totEnr  = active.reduce((s,a)=>s+(a.enrolled||0),0);
+  const totAll  = totOut + totInb;
+
+  // Total card
+  document.getElementById('tcTotal').textContent = totAll.toLocaleString();
+  document.getElementById('tcOut').textContent   = totOut.toLocaleString();
+  document.getElementById('tcInb').textContent   = totInb.toLocaleString();
+
+  // Stat cards
+  document.getElementById('scOut').textContent  = totOut.toLocaleString();
+  document.getElementById('scInb').textContent  = totInb.toLocaleString();
+  document.getElementById('scConn').textContent = totConn.toLocaleString();
+  document.getElementById('scConnPct').textContent  = pctStr(totConn,totOut);
+  document.getElementById('scConnBar').style.width  = pctNum(totConn,totOut)+'%';
+  document.getElementById('scConnMeta').textContent = `Connected % of ${totOut} outcalls`;
+  document.getElementById('scInbConn').textContent    = totInbC.toLocaleString();
+  document.getElementById('scInbConnPct').textContent  = pctStr(totInbC,totInb);
+  document.getElementById('scInbConnBar').style.width  = pctNum(totInbC,totInb)+'%';
+  document.getElementById('scInbConnMeta').textContent = `Connected % of ${totInb} inbound`;
+
+  // Lead cards
+  document.getElementById('lcQual').textContent    = totQual;
+  document.getElementById('lcQualPct').textContent  = pctStr(totQual,totConn);
+  document.getElementById('lcQualBar').style.width  = pctNum(totQual,totConn)+'%';
+  document.getElementById('lcQualMeta').textContent = `${totQual} / ${totConn} of connected`;
+  document.getElementById('lcPros').textContent    = totPros;
+  document.getElementById('lcProsPct').textContent  = pctStr(totPros,totQual);
+  document.getElementById('lcProsBar').style.width  = pctNum(totPros,totQual)+'%';
+  document.getElementById('lcProsMeta').textContent = `${totPros} / ${totQual} of qualified`;
+  document.getElementById('lcEnr').textContent    = totEnr;
+  document.getElementById('lcEnrPct').textContent  = pctStr(totEnr,totPros);
+  document.getElementById('lcEnrBar').style.width  = pctNum(totEnr,totPros)+'%';
+  document.getElementById('lcEnrMeta').textContent = `${totEnr} / ${totPros} of prospects`;
+
+  // AI
+  const sorted   = [...active].sort((a,b)=>(b.conn||0)-(a.conn||0));
+  const topAgent = sorted[0];
+  const inactive = data.filter(a=>(a.out||0)===0&&(a.inbound||0)===0);
+  const connPctN = safe(totConn/(totOut||1)*100);
+  const lowConn  = active.filter(a=>(a.out||0)>5&&safe((a.conn||0)/(a.out||1))<0.4);
+  const bestConv = active.filter(a=>(a.qualified||0)>0)
+    .sort((a,b)=>safe((b.prospects||0)/(b.qualified||1))-safe((a.prospects||0)/(a.qualified||1)))[0];
+
+  const insights=[
+    topAgent&&{title:'🏆 Top Performer',ac:'#22c55e',
+      val:topAgent.user,desc:`${topAgent.conn||0} connected calls (60s+)`},
+    lowConn.length&&{title:'⚠️ Low Connect Rate',ac:'#f59e0b',
+      val:`${connPctN.toFixed(1)}% connect rate`,desc:`Target 70%+ for quality conversations`},
+    inactive.length&&{title:`⏸ ${inactive.length} Inactive`,ac:'#6b7280',
+      val:`${inactive.length} advisors idle`,
+      desc:inactive.slice(0,3).map(a=>a.user.split(' ')[0]).join(', ')+(inactive.length>3?` +${inactive.length-3} more`:'')+' — no calls'},
+    bestConv&&{title:'🎯 Best Converter',ac:'#a855f7',
+      val:bestConv.user,desc:`${pctStr(bestConv.prospects||0,bestConv.qualified||1)} qual→prospect`},
+  ].filter(Boolean);
+
+  document.getElementById('aiGrid').innerHTML = insights.map(i=>`
+    <div class="ai-card" style="--ac:${i.ac}">
+      <div class="ai-title">${i.title}</div>
+      <div class="ai-val">${i.val}</div>
+      <div class="ai-desc">${i.desc}</div>
+    </div>`).join('');
+
+  renderTable();
+}
+
+function renderTable(){
+  const q    = (document.getElementById('searchBox').value||'').toLowerCase();
+  const rows = allAgents.filter(a=>a.user.toLowerCase().includes(q)).sort((a,b)=>(b.out||0)-(a.out||0));
+  const maxO = Math.max(...rows.map(a=>a.out||0),1);
+  const active = rows.filter(a=>(a.out||0)>0||(a.inbound||0)>0).length;
+  document.getElementById('lbCount').textContent = `${active} active advisors`;
+
+  if(!rows.length){
+    document.getElementById('agentTable').innerHTML=`<tr><td colspan="11" class="no-data">No advisors found</td></tr>`;
+    return;
+  }
+
+  document.getElementById('agentTable').innerHTML = rows.map((a,i)=>{
+    const rank    = i+1;
+    const out     = a.out||0, conn=a.conn||0, inb=a.inbound||0;
+    const cPct    = out>0 ? Math.round(conn/out*100) : 0;
+    const conv    = (a.qualified||0)>0 ? Math.round((a.prospects||0)/(a.qualified||1)*100) : 0;
+    const barPct  = Math.round(out/maxO*100);
+    const cCol    = cPct>=70?'#22c55e':cPct>=40?'#60a5fa':'#f87171';
+    let badge,bc;
+    if(out===0&&inb===0){badge='Idle';bc='badge-idle';}
+    else if(cPct>=70){badge='Top';bc='badge-top';}
+    else if(cPct>=40){badge='Good';bc='badge-good';}
+    else{badge='Low';bc='badge-low';}
+    const medal = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
+    return `<tr>
+      <td style="color:${rank<=3?'#f59e0b':'#6b7280'};font-size:.7rem">${medal}</td>
+      <td><span class="agent-name">${a.user}</span><span class="agent-ext">Ext:${a.exts||'—'}</span></td>
+      <td>${out}<span class="bar-wrap"><span class="bar-fill" style="width:${barPct}%;background:#4f46e5"></span></span></td>
+      <td style="color:#22c55e;font-weight:600">${conn}</td>
+      <td style="color:${cCol};font-weight:700">${cPct}%</td>
+      <td style="color:#f59e0b">${inb}</td>
+      <td style="color:#06b6d4">${a.inboundConnected||0}</td>
+      <td style="color:#a855f7">${a.qualified||0}</td>
+      <td style="color:#ec4899">${a.prospects||0}</td>
+      <td style="color:#f59e0b;font-weight:600">${conv}%</td>
+      <td><span class="badge ${bc}">${badge}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleTimeString(); },1000);
+fetchData();
+setInterval(fetchData,60000);
+</script>
+</body>
+</html>
